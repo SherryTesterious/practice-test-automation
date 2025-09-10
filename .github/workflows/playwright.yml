@@ -1,0 +1,52 @@
+name: Playwright Tests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+jobs:
+  test:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: playwright-${{ github.ref }}
+      cancel-in-progress: true
+
+    env:
+      BASE_URL: ${{ secrets.BASE_URL }}
+      USERNAME: ${{ secrets.USERNAME }}
+      USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+      CI: true
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+        
+    - name: Cache Playwright browsers
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-pw-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-pw-
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install Playwright Browsers(Chromium Only)
+      run: npx playwright install --with-deps chromium
+
+    - name: Run Playwright tests (Chromium Only)
+      run: npx playwright test --project=chromium
+
+    - name: Upload Playwright HTML report
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 14
