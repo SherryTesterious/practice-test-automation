@@ -1,5 +1,5 @@
-const { test, expect } = require('@playwright/test');
-require('dotenv').config();
+import { test, expect } from '@playwright/test';
+import 'dotenv/config';
 
 test('login with valid credentials', async ({ page }) => {
   await page.goto('/practice-test-login/');
